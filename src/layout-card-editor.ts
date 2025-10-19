@@ -140,12 +140,12 @@ class LayoutCardEditor extends LitElement {
     return html`
       <div class="card-config">
         <ha-tab-group @tab-click=${this._handleSwitchTab}>
-          <ha-tab slot="nav" .active=${this._selectedTab == 0} .panel=${0}>
+          <ha-tab-group-tab slot="nav" .active=${this._selectedTab == 0} .panel=${0}>
             Layout
           </ha-tab>
           <ha-tab slot="nav" .active=${this._selectedTab == 1} .panel=${1}>
             Cards
-          </ha-tab>
+          </ha-tab-group-tab>
         </ha-tab-group>
         <div id="editor">
           ${[this._renderLayoutEditor, this._renderCardsEditor][
@@ -202,14 +202,14 @@ class LayoutCardEditor extends LitElement {
               </ha-tab>
             `;
           })}
-          <ha-tab
+          <ha-tab-group-tab
             slot="nav"
             .active=${selected == numcards}
             panel="add-card"
             id="add-card"
           >
             <ha-icon .icon=${"mdi:plus"}></ha-icon>
-          </ha-tab>
+          </ha-tab-group-tab>
         </ha-tab-group>
         <div id="editor">
           ${selected < numcards
@@ -286,10 +286,10 @@ class LayoutCardEditor extends LitElement {
           margin-top: -16px;
           margin-bottom: 16px;
         }
-        ha-tab {
+        ha-tab-group-tab {
           flex: 1;
         }
-        ha-tab::part(base) {
+        ha-tab-group-tab::part(base) {
           width: 100%;
           justify-content: center;
         }
