@@ -2,24 +2,16 @@ import { LitElement, html, CSSResultArray, css } from "lit";
 import { property, state, query } from "lit/decorators.js";
 import { LayoutCardConfig } from "./types";
 import { loadHaForm, LAYOUT_CARD_SELECTOR_OPTIONS } from "./helpers";
-
-import "home-assistant-frontend/src/components/ha-tab-group";
-import "home-assistant-frontend/src/components/ha-tab-group-tab";
-
 const DEFAULT_LAYOUT_TYPES = ["masonry", "sidebar", "panel"];
-
 class LayoutCardEditor extends LitElement {
   @property() _config: LayoutCardConfig;
   @property() lovelace;
   @property() hass;
-
   @state() _selectedTab = 0;
   @state() _selectedCard = 0;
   @state() _cardGUIMode = true;
   @state() _cardGUIModeAvailable = true;
-
   @query("hui-card-element-editor") _cardEditorEl?;
-
   _schema = (localize) => [
     {
       name: "layout_type",
@@ -42,20 +34,16 @@ class LayoutCardEditor extends LitElement {
       selector: { object: {} },
     },
   ];
-
   setConfig(config) {
     this._config = config;
   }
-
   firstUpdated() {
     loadHaForm();
   }
-
   _handleSwitchTab(ev: CustomEvent) {
     ev.stopPropagation();
     this._selectedTab = parseInt(ev.detail.name, 10);
   }
-
   _editCard(ev) {
     ev.stopPropagation();
     if (ev.detail.name === "add-card") {
@@ -116,22 +104,18 @@ class LayoutCardEditor extends LitElement {
       new CustomEvent("config-changed", { detail: { config: this._config } })
     );
   }
-
   _valueChanged(ev) {
     ev.stopPropagation();
     const config = ev.detail.value;
-
     this.dispatchEvent(
       new CustomEvent("config-changed", { detail: { config } })
     );
   }
-
   _computeLabel(schema) {
     if (schema.name === "layout_type")
       return this.hass.localize("ui.panel.lovelace.editor.edit_view.type");
     if (schema.name === "layout") return "Layout options (layout-card)";
   }
-
   render() {
     if (!this.hass || !this._config) {
       return html``;
@@ -139,21 +123,22 @@ class LayoutCardEditor extends LitElement {
 
     return html`
       <div class="card-config">
-        <ha-tab-group .selectedTab=${this._selectedTab} @tab-click=${this._handleSwitchTab}>
-          <ha-tab-group-tab slot="nav" role="tab" .selected=${this._selectedTab === 0} id="layout-tab">
+        <ha-tab-group @wa-tab-show=${this._handleSwitchTab}>
+          <ha-tab-group-tab slot="nav" .active=${this._selectedTab == 0} .panel=${0}>
             Layout
           </ha-tab-group-tab>
-          <ha-tab-group-tab slot="nav" role="tab" .selected=${this._selectedTab === 1} id="cards-tab">
+          <ha-tab-group-tab slot="nav" .active=${this._selectedTab == 1} .panel=${1}>
             Cards
           </ha-tab-group-tab>
         </ha-tab-group>
         <div id="editor">
-          ${[this._renderLayoutEditor, this._renderCardsEditor][this._selectedTab].bind(this)()}
+          ${[this._renderLayoutEditor, this._renderCardsEditor][
+            this._selectedTab
+          ].bind(this)()}
         </div>
       </div>
     `;
   }
-
   _renderLayoutEditor() {
     const schema = this._schema(this.hass.localize);
     const data = {
@@ -180,7 +165,6 @@ class LayoutCardEditor extends LitElement {
       ></ha-form>
     `;
   }
-
   _renderCardsEditor() {
     const selected = this._selectedCard;
     const numcards = this._config.cards.length;
@@ -192,7 +176,7 @@ class LayoutCardEditor extends LitElement {
     }
     return html`
       <div class="cards">
-        <ha-tab-group @tab-click=${this._editCard}>
+        <ha-tab-group @wa-tab-show=${this._handleSwitchTab}>
           ${this._config.cards.map((_card, i) => {
             return html`
               <ha-tab-group-tab slot="nav" .active=${selected == i} .panel=${i}>
@@ -200,14 +184,14 @@ class LayoutCardEditor extends LitElement {
               </ha-tab-group-tab>
             `;
           })}
-          <ha-tab-group-tab
+          <sl-tab
             slot="nav"
             .active=${selected == numcards}
             panel="add-card"
             id="add-card"
           >
             <ha-icon .icon=${"mdi:plus"}></ha-icon>
-          </ha-tab-group-tab>
+          </sl-tab>
         </ha-tab-group>
         <div id="editor">
           ${selected < numcards
@@ -261,21 +245,18 @@ class LayoutCardEditor extends LitElement {
       </div>
     `;
   }
-
   static get styles(): CSSResultArray {
     return [
       css`
         mwc-tab-bar {
           border-bottom: 1px solid var(--divider-color);
         }
-
         .layout,
         .cards #editor {
           margin-top: 8px;
           border: 1px solid var(--divider-color);
           padding: 12px;
         }
-
         #add-card {
           max-width: 32px;
           padding: 0;
@@ -291,7 +272,9 @@ class LayoutCardEditor extends LitElement {
           width: 100%;
           justify-content: center;
         }
-
+        ha-tab-group-tab[panel="?"] {
+          flex: 0;
+        }
         .cards .card-options {
           display: flex;
           justify-content: flex-end;
@@ -304,7 +287,6 @@ class LayoutCardEditor extends LitElement {
         .gui-mode-button {
           margin-right: auto;
         }
-
         a {
           color: var(--primary-color);
         }
@@ -312,5 +294,4 @@ class LayoutCardEditor extends LitElement {
     ];
   }
 }
-
 customElements.define("layout-card-editor", LayoutCardEditor);
