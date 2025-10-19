@@ -46,77 +46,23 @@ class LayoutCardEditor extends LitElement {
 
   firstUpdated() {
     loadHaForm();
-    // Add event listener to debug all events
-    this.shadowRoot?.addEventListener('*', (e) => {
-      console.log('[LAYOUT-CARD DEBUG] Event:', e.type, e);
-    }, true);
   }
 
   _handleSwitchTab(ev: CustomEvent) {
-    console.log('[LAYOUT-CARD DEBUG] _handleSwitchTab called', ev);
-    console.log('[LAYOUT-CARD DEBUG] Event type:', ev.type);
-    console.log('[LAYOUT-CARD DEBUG] Event detail:', ev.detail);
-    console.log('[LAYOUT-CARD DEBUG] Event target:', ev.target);
-    console.log('[LAYOUT-CARD DEBUG] Event currentTarget:', ev.currentTarget);
-    
     ev.stopPropagation();
-    
-    // Try multiple possible event structures
-    if (ev.detail) {
-      if (ev.detail.activeTab !== undefined) {
-        console.log('[LAYOUT-CARD DEBUG] Using ev.detail.activeTab:', ev.detail.activeTab);
-        this._selectedTab = ev.detail.activeTab;
-      } else if (ev.detail.tab) {
-        if (ev.detail.tab.panel !== undefined) {
-          console.log('[LAYOUT-CARD DEBUG] Using ev.detail.tab.panel:', ev.detail.tab.panel);
-          this._selectedTab = parseInt(ev.detail.tab.panel, 10);
-        }
-      } else if (ev.detail.name !== undefined) {
-        console.log('[LAYOUT-CARD DEBUG] Using ev.detail.name:', ev.detail.name);
-        this._selectedTab = parseInt(ev.detail.name, 10);
-      } else {
-        console.warn('[LAYOUT-CARD DEBUG] Unknown event structure for tab switch');
-        console.log('[LAYOUT-CARD DEBUG] Full event:', JSON.stringify(ev.detail));
-      }
+    // ha-tab-group uses activeTab property - the event contains the index
+    if (ev.detail && ev.detail.activeTab !== undefined) {
+      this._selectedTab = ev.detail.activeTab;
     }
   }
 
   _editCard(ev) {
-    console.log('[LAYOUT-CARD DEBUG] _editCard called', ev);
-    console.log('[LAYOUT-CARD DEBUG] Event detail:', ev.detail);
-    
     ev.stopPropagation();
-    
-    let tabIndex = null;
-    
-    // Try multiple possible event structures
-    if (ev.detail) {
-      if (ev.detail.activeTab !== undefined) {
-        console.log('[LAYOUT-CARD DEBUG] Using ev.detail.activeTab:', ev.detail.activeTab);
-        tabIndex = ev.detail.activeTab;
-      } else if (ev.detail.tab) {
-        if (ev.detail.tab.panel === "add-card" || ev.detail.tab.id === "add-card") {
-          console.log('[LAYOUT-CARD DEBUG] Add card tab clicked');
-          this._selectedCard = this._config.cards.length;
-          return;
-        } else if (ev.detail.tab.panel !== undefined) {
-          console.log('[LAYOUT-CARD DEBUG] Using ev.detail.tab.panel:', ev.detail.tab.panel);
-          tabIndex = parseInt(ev.detail.tab.panel, 10);
-        }
-      } else if (ev.detail.name !== undefined) {
-        if (ev.detail.name === "add-card") {
-          console.log('[LAYOUT-CARD DEBUG] Add card tab clicked (name)');
-          this._selectedCard = this._config.cards.length;
-          return;
-        }
-        console.log('[LAYOUT-CARD DEBUG] Using ev.detail.name:', ev.detail.name);
-        tabIndex = parseInt(ev.detail.name, 10);
-      }
-    }
-    
-    if (tabIndex !== null) {
+    // Check if this is the add-card tab
+    if (ev.detail && ev.detail.activeTab !== undefined) {
+      const tabIndex = ev.detail.activeTab;
       if (tabIndex >= this._config.cards.length) {
-        console.log('[LAYOUT-CARD DEBUG] Tab index >= cards length, treating as add-card');
+        // This is the add-card tab
         this._selectedCard = this._config.cards.length;
         return;
       }
@@ -124,8 +70,6 @@ class LayoutCardEditor extends LitElement {
       if (this._cardEditorEl) this._cardEditorEl.GUImode = true;
       this._cardGUIModeAvailable = true;
       this._selectedCard = tabIndex;
-    } else {
-      console.warn('[LAYOUT-CARD DEBUG] Could not determine tab index');
     }
   }
   
@@ -199,19 +143,16 @@ class LayoutCardEditor extends LitElement {
       return html``;
     }
 
-    console.log('[LAYOUT-CARD DEBUG] Rendering, selectedTab:', this._selectedTab);
-
     return html`
       <div class="card-config">
         <ha-tab-group 
           .activeTab=${this._selectedTab}
           @active-tab-changed=${this._handleSwitchTab}
-          @tab-show=${this._handleSwitchTab}
         >
-          <ha-tab-group-tab .panel=${0}>
+          <ha-tab-group-tab>
             Layout
           </ha-tab-group-tab>
-          <ha-tab-group-tab .panel=${1}>
+          <ha-tab-group-tab>
             Cards
           </ha-tab-group-tab>
         </ha-tab-group>
@@ -254,8 +195,6 @@ class LayoutCardEditor extends LitElement {
   _renderCardsEditor() {
     const selected = this._selectedCard;
     const numcards = this._config.cards.length;
-    console.log('[LAYOUT-CARD DEBUG] Rendering cards editor, selected:', selected, 'numcards:', numcards);
-    
     if (this._config.entities) {
       return html`
         This layout-card has the <code>entities</code> parameter set. You cannot
@@ -267,16 +206,15 @@ class LayoutCardEditor extends LitElement {
         <ha-tab-group
           .activeTab=${selected >= numcards ? numcards : selected}
           @active-tab-changed=${this._editCard}
-          @tab-show=${this._editCard}
         >
           ${this._config.cards.map((_card, i) => {
             return html`
-              <ha-tab-group-tab .panel=${i}>
+              <ha-tab-group-tab>
                 ${i + 1}
               </ha-tab-group-tab>
             `;
           })}
-          <ha-tab-group-tab .panel=${"add-card"} id="add-card">
+          <ha-tab-group-tab id="add-card">
             <ha-icon .icon=${"mdi:plus"}></ha-icon>
           </ha-tab-group-tab>
         </ha-tab-group>
