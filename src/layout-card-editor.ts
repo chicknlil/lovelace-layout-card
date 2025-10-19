@@ -46,33 +46,89 @@ class LayoutCardEditor extends LitElement {
 
   firstUpdated() {
     loadHaForm();
+    // Add event listener to debug all events
+    this.shadowRoot?.addEventListener('*', (e) => {
+      console.log('[LAYOUT-CARD DEBUG] Event:', e.type, e);
+    }, true);
   }
 
   _handleSwitchTab(ev: CustomEvent) {
+    console.log('[LAYOUT-CARD DEBUG] _handleSwitchTab called', ev);
+    console.log('[LAYOUT-CARD DEBUG] Event type:', ev.type);
+    console.log('[LAYOUT-CARD DEBUG] Event detail:', ev.detail);
+    console.log('[LAYOUT-CARD DEBUG] Event target:', ev.target);
+    console.log('[LAYOUT-CARD DEBUG] Event currentTarget:', ev.currentTarget);
+    
     ev.stopPropagation();
-    // ha-tab-group passes the tab element in ev.detail.tab
-    // We need to get the panel property from the tab
-    const tab = ev.detail.tab;
-    if (tab && tab.panel !== undefined) {
-      this._selectedTab = parseInt(tab.panel, 10);
+    
+    // Try multiple possible event structures
+    if (ev.detail) {
+      if (ev.detail.activeTab !== undefined) {
+        console.log('[LAYOUT-CARD DEBUG] Using ev.detail.activeTab:', ev.detail.activeTab);
+        this._selectedTab = ev.detail.activeTab;
+      } else if (ev.detail.tab) {
+        if (ev.detail.tab.panel !== undefined) {
+          console.log('[LAYOUT-CARD DEBUG] Using ev.detail.tab.panel:', ev.detail.tab.panel);
+          this._selectedTab = parseInt(ev.detail.tab.panel, 10);
+        }
+      } else if (ev.detail.name !== undefined) {
+        console.log('[LAYOUT-CARD DEBUG] Using ev.detail.name:', ev.detail.name);
+        this._selectedTab = parseInt(ev.detail.name, 10);
+      } else {
+        console.warn('[LAYOUT-CARD DEBUG] Unknown event structure for tab switch');
+        console.log('[LAYOUT-CARD DEBUG] Full event:', JSON.stringify(ev.detail));
+      }
     }
   }
 
   _editCard(ev) {
+    console.log('[LAYOUT-CARD DEBUG] _editCard called', ev);
+    console.log('[LAYOUT-CARD DEBUG] Event detail:', ev.detail);
+    
     ev.stopPropagation();
-    // ha-tab-group passes the tab element in ev.detail.tab
-    const tab = ev.detail.tab;
-    if (tab && tab.panel === "add-card") {
-      this._selectedCard = this._config.cards.length;
-      return;
+    
+    let tabIndex = null;
+    
+    // Try multiple possible event structures
+    if (ev.detail) {
+      if (ev.detail.activeTab !== undefined) {
+        console.log('[LAYOUT-CARD DEBUG] Using ev.detail.activeTab:', ev.detail.activeTab);
+        tabIndex = ev.detail.activeTab;
+      } else if (ev.detail.tab) {
+        if (ev.detail.tab.panel === "add-card" || ev.detail.tab.id === "add-card") {
+          console.log('[LAYOUT-CARD DEBUG] Add card tab clicked');
+          this._selectedCard = this._config.cards.length;
+          return;
+        } else if (ev.detail.tab.panel !== undefined) {
+          console.log('[LAYOUT-CARD DEBUG] Using ev.detail.tab.panel:', ev.detail.tab.panel);
+          tabIndex = parseInt(ev.detail.tab.panel, 10);
+        }
+      } else if (ev.detail.name !== undefined) {
+        if (ev.detail.name === "add-card") {
+          console.log('[LAYOUT-CARD DEBUG] Add card tab clicked (name)');
+          this._selectedCard = this._config.cards.length;
+          return;
+        }
+        console.log('[LAYOUT-CARD DEBUG] Using ev.detail.name:', ev.detail.name);
+        tabIndex = parseInt(ev.detail.name, 10);
+      }
     }
-    this._cardGUIMode = true;
-    if (this._cardEditorEl) this._cardEditorEl.GUImode = true;
-    this._cardGUIModeAvailable = true;
-    if (tab && tab.panel !== undefined) {
-      this._selectedCard = parseInt(tab.panel, 10);
+    
+    if (tabIndex !== null) {
+      if (tabIndex >= this._config.cards.length) {
+        console.log('[LAYOUT-CARD DEBUG] Tab index >= cards length, treating as add-card');
+        this._selectedCard = this._config.cards.length;
+        return;
+      }
+      this._cardGUIMode = true;
+      if (this._cardEditorEl) this._cardEditorEl.GUImode = true;
+      this._cardGUIModeAvailable = true;
+      this._selectedCard = tabIndex;
+    } else {
+      console.warn('[LAYOUT-CARD DEBUG] Could not determine tab index');
     }
   }
+  
   _addCard(ev: CustomEvent) {
     ev.stopPropagation();
     const cards = [...this._config.cards];
@@ -143,13 +199,19 @@ class LayoutCardEditor extends LitElement {
       return html``;
     }
 
+    console.log('[LAYOUT-CARD DEBUG] Rendering, selectedTab:', this._selectedTab);
+
     return html`
       <div class="card-config">
-        <ha-tab-group @tab-show=${this._handleSwitchTab}>
-          <ha-tab-group-tab slot="nav" .active=${this._selectedTab == 0} .panel=${0}>
+        <ha-tab-group 
+          .activeTab=${this._selectedTab}
+          @active-tab-changed=${this._handleSwitchTab}
+          @tab-show=${this._handleSwitchTab}
+        >
+          <ha-tab-group-tab .panel=${0}>
             Layout
           </ha-tab-group-tab>
-          <ha-tab-group-tab slot="nav" .active=${this._selectedTab == 1} .panel=${1}>
+          <ha-tab-group-tab .panel=${1}>
             Cards
           </ha-tab-group-tab>
         </ha-tab-group>
@@ -192,6 +254,8 @@ class LayoutCardEditor extends LitElement {
   _renderCardsEditor() {
     const selected = this._selectedCard;
     const numcards = this._config.cards.length;
+    console.log('[LAYOUT-CARD DEBUG] Rendering cards editor, selected:', selected, 'numcards:', numcards);
+    
     if (this._config.entities) {
       return html`
         This layout-card has the <code>entities</code> parameter set. You cannot
@@ -200,20 +264,19 @@ class LayoutCardEditor extends LitElement {
     }
     return html`
       <div class="cards">
-        <ha-tab-group @tab-show=${this._editCard}>
+        <ha-tab-group
+          .activeTab=${selected >= numcards ? numcards : selected}
+          @active-tab-changed=${this._editCard}
+          @tab-show=${this._editCard}
+        >
           ${this._config.cards.map((_card, i) => {
             return html`
-              <ha-tab-group-tab slot="nav" .active=${selected == i} .panel=${i}>
+              <ha-tab-group-tab .panel=${i}>
                 ${i + 1}
               </ha-tab-group-tab>
             `;
           })}
-          <ha-tab-group-tab
-            slot="nav"
-            .active=${selected == numcards}
-            .panel=${"add-card"}
-            id="add-card"
-          >
+          <ha-tab-group-tab .panel=${"add-card"} id="add-card">
             <ha-icon .icon=${"mdi:plus"}></ha-icon>
           </ha-tab-group-tab>
         </ha-tab-group>
