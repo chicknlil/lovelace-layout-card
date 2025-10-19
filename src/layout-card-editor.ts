@@ -4,7 +4,7 @@ import { LayoutCardConfig } from "./types";
 import { loadHaForm, LAYOUT_CARD_SELECTOR_OPTIONS } from "./helpers";
 
 import "home-assistant-frontend/src/components/ha-tab-group";
-import "home-assistant-frontend/src/components/ha-tab";
+import "home-assistant-frontend/src/components/ha-tab-group-tab";
 
 const DEFAULT_LAYOUT_TYPES = ["masonry", "sidebar", "panel"];
 
@@ -139,18 +139,16 @@ class LayoutCardEditor extends LitElement {
 
     return html`
       <div class="card-config">
-        <ha-tab-group @tab-click=${this._handleSwitchTab}>
-          <ha-tab-group-tab slot="nav" .active=${this._selectedTab == 0} .panel=${0}>
+        <ha-tab-group .selectedTab=${this._selectedTab} @tab-click=${this._handleSwitchTab}>
+          <ha-tab-group-tab slot="nav" role="tab" .selected=${this._selectedTab === 0} id="layout-tab">
             Layout
           </ha-tab-group-tab>
-          <ha-tab-group-tab slot="nav" .active=${this._selectedTab == 1} .panel=${1}>
+          <ha-tab-group-tab slot="nav" role="tab" .selected=${this._selectedTab === 1} id="cards-tab">
             Cards
           </ha-tab-group-tab>
         </ha-tab-group>
         <div id="editor">
-          ${[this._renderLayoutEditor, this._renderCardsEditor][
-            this._selectedTab
-          ].bind(this)()}
+          ${[this._renderLayoutEditor, this._renderCardsEditor][this._selectedTab].bind(this)()}
         </div>
       </div>
     `;
