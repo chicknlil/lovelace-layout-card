@@ -3,6 +3,9 @@ import { property, state, query } from "lit/decorators.js";
 import { LayoutCardConfig } from "./types";
 import { loadHaForm, LAYOUT_CARD_SELECTOR_OPTIONS } from "./helpers";
 
+import "home-assistant-frontend/src/components/ha-tab-group";
+import "home-assistant-frontend/src/components/ha-tab";
+
 const DEFAULT_LAYOUT_TYPES = ["masonry", "sidebar", "panel"];
 
 class LayoutCardEditor extends LitElement {
