@@ -166,7 +166,7 @@ class LayoutCardEditor extends LitElement {
 
     return html`
       <div class="card-config">
-        <ha-tab
+        <ha-tabs
           .selected=${this._selectedTab}
           @selected-changed=${this._handleSwitchTab}
         >
@@ -220,7 +220,7 @@ class LayoutCardEditor extends LitElement {
     }
     return html`
       <div class="cards">
-        <ha-tab
+        <ha-tabs
           .selected=${selected >= numcards ? numcards : selected}
           @selected-changed=${this._editCard}
         >
@@ -230,7 +230,7 @@ class LayoutCardEditor extends LitElement {
           <ha-tab-group-tab id="add-card">
             <ha-icon .icon=${"mdi:plus"}></ha-icon>
           </ha-tab-group-tab>
-        </ha-tab>
+        </ha-tabs>
         <div id="editor">
           ${selected < numcards
             ? html`
@@ -302,7 +302,7 @@ class LayoutCardEditor extends LitElement {
           max-width: 32px;
           padding: 0;
         }
-        ha-tab {
+        ha-tabs {
           margin-top: -16px;
           margin-bottom: 16px;
         }
