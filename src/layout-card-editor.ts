@@ -50,19 +50,28 @@ class LayoutCardEditor extends LitElement {
 
   _handleSwitchTab(ev: CustomEvent) {
     ev.stopPropagation();
-    this._selectedTab = parseInt(ev.detail.name, 10);
+    // ha-tab-group passes the tab element in ev.detail.tab
+    // We need to get the panel property from the tab
+    const tab = ev.detail.tab;
+    if (tab && tab.panel !== undefined) {
+      this._selectedTab = parseInt(tab.panel, 10);
+    }
   }
 
   _editCard(ev) {
     ev.stopPropagation();
-    if (ev.detail.name === "add-card") {
+    // ha-tab-group passes the tab element in ev.detail.tab
+    const tab = ev.detail.tab;
+    if (tab && tab.panel === "add-card") {
       this._selectedCard = this._config.cards.length;
       return;
     }
     this._cardGUIMode = true;
     if (this._cardEditorEl) this._cardEditorEl.GUImode = true;
     this._cardGUIModeAvailable = true;
-    this._selectedCard = parseInt(ev.detail.name, 10);
+    if (tab && tab.panel !== undefined) {
+      this._selectedCard = parseInt(tab.panel, 10);
+    }
   }
   _addCard(ev: CustomEvent) {
     ev.stopPropagation();
@@ -191,7 +200,7 @@ class LayoutCardEditor extends LitElement {
     }
     return html`
       <div class="cards">
-        <ha-tab-group @wa-tab-show=${this._editCard}>
+        <ha-tab-group @tab-show=${this._editCard}>
           ${this._config.cards.map((_card, i) => {
             return html`
               <ha-tab-group-tab slot="nav" .active=${selected == i} .panel=${i}>
@@ -202,7 +211,7 @@ class LayoutCardEditor extends LitElement {
           <ha-tab-group-tab
             slot="nav"
             .active=${selected == numcards}
-            panel="add-card"
+            .panel=${"add-card"}
             id="add-card"
           >
             <ha-icon .icon=${"mdi:plus"}></ha-icon>
