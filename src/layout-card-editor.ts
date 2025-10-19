@@ -50,47 +50,49 @@ class LayoutCardEditor extends LitElement {
 
   _handleSwitchTab(ev: CustomEvent) {
     ev.stopPropagation();
-    // Try multiple possible event structures
-    if (ev.detail !== undefined) {
-      if (typeof ev.detail === 'number') {
-        this._selectedTab = ev.detail;
-      } else if (ev.detail.index !== undefined) {
-        this._selectedTab = ev.detail.index;
-      } else if (ev.detail.activeTab !== undefined) {
-        this._selectedTab = ev.detail.activeTab;
-      } else if (ev.detail.selected !== undefined) {
-        this._selectedTab = ev.detail.selected;
-      }
+    // Try the same structure as original (panel property)
+    if (ev.detail && ev.detail.panel !== undefined) {
+      this._selectedTab = parseInt(ev.detail.panel, 10);
+    } 
+    // Try index property
+    else if (ev.detail && ev.detail.index !== undefined) {
+      this._selectedTab = ev.detail.index;
+    }
+    // Try if detail is just the number
+    else if (typeof ev.detail === 'number') {
+      this._selectedTab = ev.detail;
     }
   }
 
   _editCard(ev) {
     ev.stopPropagation();
     
-    let tabIndex = null;
-    // Try to get the tab index from the event
-    if (ev.detail !== undefined) {
-      if (typeof ev.detail === 'number') {
-        tabIndex = ev.detail;
-      } else if (ev.detail.index !== undefined) {
-        tabIndex = ev.detail.index;
-      } else if (ev.detail.activeTab !== undefined) {
-        tabIndex = ev.detail.activeTab;
-      } else if (ev.detail.selected !== undefined) {
-        tabIndex = ev.detail.selected;
-      }
+    let panelValue = null;
+    
+    // Try to get panel from event
+    if (ev.detail && ev.detail.panel !== undefined) {
+      panelValue = ev.detail.panel;
+    } else if (ev.detail && ev.detail.index !== undefined) {
+      panelValue = ev.detail.index;
+    } else if (typeof ev.detail === 'number') {
+      panelValue = ev.detail;
     }
     
-    if (tabIndex !== null) {
-      if (tabIndex >= this._config.cards.length) {
-        // This is the add-card tab
+    if (panelValue === "add-card") {
+      this._selectedCard = this._config.cards.length;
+      return;
+    }
+    
+    if (panelValue !== null) {
+      const cardIndex = typeof panelValue === 'string' ? parseInt(panelValue, 10) : panelValue;
+      if (cardIndex >= this._config.cards.length) {
         this._selectedCard = this._config.cards.length;
         return;
       }
       this._cardGUIMode = true;
       if (this._cardEditorEl) this._cardEditorEl.GUImode = true;
       this._cardGUIModeAvailable = true;
-      this._selectedCard = tabIndex;
+      this._selectedCard = cardIndex;
     }
   }
   
@@ -166,13 +168,14 @@ class LayoutCardEditor extends LitElement {
 
     return html`
       <div class="card-config">
-        <ha-tabs
-          .selected=${this._selectedTab}
-          @selected-changed=${this._handleSwitchTab}
-        >
-          <ha-tab-group-tab>Layout</ha-tab-group-tab>
-          <ha-tab-group-tab>Cards</ha-tab-group-tab>
-        </ha-tab>
+        <ha-tab-group @ha-tab-group-tab-click=${this._handleSwitchTab}>
+          <ha-tab-group-tab .active=${this._selectedTab == 0} .panel=${0}>
+            Layout
+          </ha-tab-group-tab>
+          <ha-tab-group-tab .active=${this._selectedTab == 1} .panel=${1}>
+            Cards
+          </ha-tab-group-tab>
+        </ha-tab-group>
         <div id="editor">
           ${[this._renderLayoutEditor, this._renderCardsEditor][
             this._selectedTab
@@ -220,17 +223,22 @@ class LayoutCardEditor extends LitElement {
     }
     return html`
       <div class="cards">
-        <ha-tabs
-          .selected=${selected >= numcards ? numcards : selected}
-          @selected-changed=${this._editCard}
-        >
-          ${this._config.cards.map((_, i) => html`
-            <ha-tab-group-tab>${i + 1}</ha-tab-group-tab>
-          `)}
-          <ha-tab-group-tab id="add-card">
+        <ha-tab-group @ha-tab-group-tab-click=${this._editCard}>
+          ${this._config.cards.map((_card, i) => {
+            return html`
+              <ha-tab-group-tab .active=${selected == i} .panel=${i}>
+                ${i + 1}
+              </ha-tab-group-tab>
+            `;
+          })}
+          <ha-tab-group-tab
+            .active=${selected == numcards}
+            .panel=${"add-card"}
+            id="add-card"
+          >
             <ha-icon .icon=${"mdi:plus"}></ha-icon>
           </ha-tab-group-tab>
-        </ha-tabs>
+        </ha-tab-group>
         <div id="editor">
           ${selected < numcards
             ? html`
@@ -302,9 +310,16 @@ class LayoutCardEditor extends LitElement {
           max-width: 32px;
           padding: 0;
         }
-        ha-tabs {
+        ha-tab-group {
           margin-top: -16px;
           margin-bottom: 16px;
+        }
+        ha-tab-group-tab {
+          flex: 1;
+        }
+        ha-tab-group-tab::part(base) {
+          width: 100%;
+          justify-content: center;
         }
 
         .cards .card-options {
