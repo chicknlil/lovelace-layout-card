@@ -50,17 +50,26 @@ class LayoutCardEditor extends LitElement {
 
   _handleSwitchTab(ev: CustomEvent) {
     ev.stopPropagation();
-    // ha-tab-group uses activeTab property - the event contains the index
-    if (ev.detail && ev.detail.activeTab !== undefined) {
+    // ha-tab-group in HA 2025.10 uses activeTab index directly
+    if (ev.detail !== undefined && typeof ev.detail === 'number') {
+      this._selectedTab = ev.detail;
+    } else if (ev.detail && ev.detail.activeTab !== undefined) {
       this._selectedTab = ev.detail.activeTab;
     }
   }
 
   _editCard(ev) {
     ev.stopPropagation();
-    // Check if this is the add-card tab
-    if (ev.detail && ev.detail.activeTab !== undefined) {
-      const tabIndex = ev.detail.activeTab;
+    
+    let tabIndex = null;
+    // Try to get the tab index from the event
+    if (ev.detail !== undefined && typeof ev.detail === 'number') {
+      tabIndex = ev.detail;
+    } else if (ev.detail && ev.detail.activeTab !== undefined) {
+      tabIndex = ev.detail.activeTab;
+    }
+    
+    if (tabIndex !== null) {
       if (tabIndex >= this._config.cards.length) {
         // This is the add-card tab
         this._selectedCard = this._config.cards.length;
@@ -147,14 +156,11 @@ class LayoutCardEditor extends LitElement {
       <div class="card-config">
         <ha-tab-group 
           .activeTab=${this._selectedTab}
-          @active-tab-changed=${this._handleSwitchTab}
+          @active-changed=${this._handleSwitchTab}
         >
-          <ha-tab-group-tab>
-            Layout
-          </ha-tab-group-tab>
-          <ha-tab-group-tab>
-            Cards
-          </ha-tab-group-tab>
+          ${["Layout", "Cards"].map((label, index) => html`
+            <ha-tab .active=${this._selectedTab === index}>${label}</ha-tab>
+          `)}
         </ha-tab-group>
         <div id="editor">
           ${[this._renderLayoutEditor, this._renderCardsEditor][
@@ -205,18 +211,14 @@ class LayoutCardEditor extends LitElement {
       <div class="cards">
         <ha-tab-group
           .activeTab=${selected >= numcards ? numcards : selected}
-          @active-tab-changed=${this._editCard}
+          @active-changed=${this._editCard}
         >
-          ${this._config.cards.map((_card, i) => {
-            return html`
-              <ha-tab-group-tab>
-                ${i + 1}
-              </ha-tab-group-tab>
-            `;
-          })}
-          <ha-tab-group-tab id="add-card">
+          ${this._config.cards.map((_, i) => html`
+            <ha-tab .active=${selected === i}>${i + 1}</ha-tab>
+          `)}
+          <ha-tab .active=${selected === numcards} id="add-card">
             <ha-icon .icon=${"mdi:plus"}></ha-icon>
-          </ha-tab-group-tab>
+          </ha-tab>
         </ha-tab-group>
         <div id="editor">
           ${selected < numcards
@@ -293,12 +295,8 @@ class LayoutCardEditor extends LitElement {
           margin-top: -16px;
           margin-bottom: 16px;
         }
-        ha-tab-group-tab {
+        ha-tab {
           flex: 1;
-        }
-        ha-tab-group-tab::part(base) {
-          width: 100%;
-          justify-content: center;
         }
 
         .cards .card-options {
