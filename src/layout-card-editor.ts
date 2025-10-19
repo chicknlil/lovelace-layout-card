@@ -50,52 +50,20 @@ class LayoutCardEditor extends LitElement {
 
   _handleSwitchTab(ev: CustomEvent) {
     ev.stopPropagation();
-    // Try the same structure as original (panel property)
-    if (ev.detail && ev.detail.panel !== undefined) {
-      this._selectedTab = parseInt(ev.detail.panel, 10);
-    } 
-    // Try index property
-    else if (ev.detail && ev.detail.index !== undefined) {
-      this._selectedTab = ev.detail.index;
-    }
-    // Try if detail is just the number
-    else if (typeof ev.detail === 'number') {
-      this._selectedTab = ev.detail;
-    }
+    this._selectedTab = parseInt(ev.detail.name, 10);
   }
 
   _editCard(ev) {
     ev.stopPropagation();
-    
-    let panelValue = null;
-    
-    // Try to get panel from event
-    if (ev.detail && ev.detail.panel !== undefined) {
-      panelValue = ev.detail.panel;
-    } else if (ev.detail && ev.detail.index !== undefined) {
-      panelValue = ev.detail.index;
-    } else if (typeof ev.detail === 'number') {
-      panelValue = ev.detail;
-    }
-    
-    if (panelValue === "add-card") {
+    if (ev.detail.name === "add-card") {
       this._selectedCard = this._config.cards.length;
       return;
     }
-    
-    if (panelValue !== null) {
-      const cardIndex = typeof panelValue === 'string' ? parseInt(panelValue, 10) : panelValue;
-      if (cardIndex >= this._config.cards.length) {
-        this._selectedCard = this._config.cards.length;
-        return;
-      }
-      this._cardGUIMode = true;
-      if (this._cardEditorEl) this._cardEditorEl.GUImode = true;
-      this._cardGUIModeAvailable = true;
-      this._selectedCard = cardIndex;
-    }
+    this._cardGUIMode = true;
+    if (this._cardEditorEl) this._cardEditorEl.GUImode = true;
+    this._cardGUIModeAvailable = true;
+    this._selectedCard = parseInt(ev.detail.name, 10);
   }
-  
   _addCard(ev: CustomEvent) {
     ev.stopPropagation();
     const cards = [...this._config.cards];
@@ -168,13 +136,13 @@ class LayoutCardEditor extends LitElement {
 
     return html`
       <div class="card-config">
-        <ha-tab-group @ha-tab-group-tab-click=${this._handleSwitchTab}>
-          <ha-tab-group-tab .active=${this._selectedTab == 0} .panel=${0}>
+        <ha-tab-group @tab-click=${this._handleSwitchTab}>
+          <ha-tab slot="nav" .active=${this._selectedTab == 0} .panel=${0}>
             Layout
-          </ha-tab-group-tab>
-          <ha-tab-group-tab .active=${this._selectedTab == 1} .panel=${1}>
+          </ha-tab>
+          <ha-tab slot="nav" .active=${this._selectedTab == 1} .panel=${1}>
             Cards
-          </ha-tab-group-tab>
+          </ha-tab>
         </ha-tab-group>
         <div id="editor">
           ${[this._renderLayoutEditor, this._renderCardsEditor][
@@ -223,21 +191,22 @@ class LayoutCardEditor extends LitElement {
     }
     return html`
       <div class="cards">
-        <ha-tab-group @ha-tab-group-tab-click=${this._editCard}>
+        <ha-tab-group @tab-click=${this._editCard}>
           ${this._config.cards.map((_card, i) => {
             return html`
-              <ha-tab-group-tab .active=${selected == i} .panel=${i}>
+              <ha-tab slot="nav" .active=${selected == i} .panel=${i}>
                 ${i + 1}
-              </ha-tab-group-tab>
+              </ha-tab>
             `;
           })}
-          <ha-tab-group-tab
+          <ha-tab
+            slot="nav"
             .active=${selected == numcards}
-            .panel=${"add-card"}
+            panel="add-card"
             id="add-card"
           >
             <ha-icon .icon=${"mdi:plus"}></ha-icon>
-          </ha-tab-group-tab>
+          </ha-tab>
         </ha-tab-group>
         <div id="editor">
           ${selected < numcards
@@ -314,10 +283,10 @@ class LayoutCardEditor extends LitElement {
           margin-top: -16px;
           margin-bottom: 16px;
         }
-        ha-tab-group-tab {
+        ha-tab {
           flex: 1;
         }
-        ha-tab-group-tab::part(base) {
+        ha-tab::part(base) {
           width: 100%;
           justify-content: center;
         }
