@@ -136,7 +136,7 @@ class LayoutCardEditor extends LitElement {
 
     return html`
       <div class="card-config">
-        <ha-tab-group @wa-tab-show=${this._handleSwitchTab}>
+        <ha-tab-group @tab-show=${this._handleSwitchTab}>
           <ha-tab-group-tab slot="nav" .active=${this._selectedTab == 0} .panel=${0}>
             Layout
           </ha-tab-group-tab>
@@ -196,7 +196,7 @@ class LayoutCardEditor extends LitElement {
             return html`
               <ha-tab-group-tab slot="nav" .active=${selected == i} .panel=${i}>
                 ${i + 1}
-              </sl-tab>
+              </ha-tab-group-tab>
             `;
           })}
           <ha-tab-group-tab
