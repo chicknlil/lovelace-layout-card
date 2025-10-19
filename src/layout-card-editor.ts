@@ -142,8 +142,8 @@ class LayoutCardEditor extends LitElement {
         <ha-tab-group @tab-click=${this._handleSwitchTab}>
           <ha-tab-group-tab slot="nav" .active=${this._selectedTab == 0} .panel=${0}>
             Layout
-          </ha-tab>
-          <ha-tab slot="nav" .active=${this._selectedTab == 1} .panel=${1}>
+          </ha-tab-group-tab>
+          <ha-tab-group-tab slot="nav" .active=${this._selectedTab == 1} .panel=${1}>
             Cards
           </ha-tab-group-tab>
         </ha-tab-group>
@@ -197,9 +197,9 @@ class LayoutCardEditor extends LitElement {
         <ha-tab-group @tab-click=${this._editCard}>
           ${this._config.cards.map((_card, i) => {
             return html`
-              <ha-tab slot="nav" .active=${selected == i} .panel=${i}>
+              <ha-tab-group-tab slot="nav" .active=${selected == i} .panel=${i}>
                 ${i + 1}
-              </ha-tab>
+              </ha-tab-group-tab>
             `;
           })}
           <ha-tab-group-tab
